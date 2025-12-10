@@ -89,7 +89,8 @@ public class NumberListImpl implements NumberList {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error reading file", e);
+            head = null;
+            size = 0;
         }
     }
 
@@ -101,10 +102,15 @@ public class NumberListImpl implements NumberList {
      * @param value - number in string notation.
      */
     public NumberListImpl(String value) {
-        BigInteger n = new BigInteger(value);
-        String binary = n.toString(base);
-        for (char c : binary.toCharArray()) {
-            this.add((byte) (c - '0'));
+        try {
+            BigInteger n = new BigInteger(value);
+            String binary = n.toString(base);
+            for (char c : binary.toCharArray()) {
+                this.add((byte) (c - '0'));
+            }
+        } catch (Exception e) {
+            head = null;
+            size = 0;
         }
     }
 
@@ -174,22 +180,11 @@ public class NumberListImpl implements NumberList {
      * @return result of additional operation.
      */
     public NumberListImpl additionalOperation(NumberList arg) {
-        long value1 = 0;
-        long value2 = 0;
+        BigInteger value1 = new BigInteger(this.toString(), base);
+        BigInteger value2 = new BigInteger(arg.toString());
 
-        Node cur1 = head;
-        for (int i = 0; i < size; i++) {
-            value1 = value1 * base + cur1.value;
-            cur1 = cur1.next;
-        }
-
-        // We assume that both lists had the same base
-        for (int i = 0; i < arg.size(); i++) {
-            value2 = value2 * base + arg.get(i);
-        }
-
-        long result = value1 | value2;
-        return new NumberListImpl(String.valueOf(result));
+        BigInteger result = value1.or(value2);
+        return new NumberListImpl(result.toString());
     }
 
 
@@ -200,15 +195,10 @@ public class NumberListImpl implements NumberList {
      * @return string representation in <b>decimal</b> scale.
      */
     public String toDecimalString() {
-        long value = 0;
-        Node cur = head;
+        String number = this.toString();
+        BigInteger value = new BigInteger(number, base);
 
-        for (int i = 0; i < size; i++) {
-            value = value * base + cur.value;
-            cur = cur.next;
-        }
-
-        return Long.toString(value);
+        return value.toString();
     }
 
 
@@ -303,7 +293,7 @@ public class NumberListImpl implements NumberList {
 
     @Override
     public boolean add(Byte e) {
-        add(0, e);
+        add(size, e);
         return true;
     }
 
